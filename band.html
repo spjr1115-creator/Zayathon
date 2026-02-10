@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NEER Band – Women Safety</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1a0000, #000);
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    /* Main Card */
+    .card {
+      width: 380px;
+      padding: 30px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #120000, #050000);
+      box-shadow: 0 0 45px rgba(255, 0, 0, 0.25);
+      text-align: center;
+      position: relative;
+    }
+
+    /* CSS Band Graphic */
+    .band {
+      width: 160px;
+      height: 60px;
+      margin: 0 auto 20px;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #ff4d4d, #b30000);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.6),
+                  0 0 25px rgba(255,0,0,0.6);
+      position: relative;
+    }
+
+    .band::before,
+    .band::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 40px;
+      height: 14px;
+      background: #330000;
+      transform: translateY(-50%);
+    }
+
+    .band::before {
+      left: -40px;
+      border-radius: 14px 0 0 14px;
+    }
+
+    .band::after {
+      right: -40px;
+      border-radius: 0 14px 14px 0;
+    }
+
+    h2 {
+      margin: 10px 0 5px;
+      color: #ff4d4d;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #bbb;
+      margin-bottom: 25px;
+    }
+
+    /* Status */
+    .status {
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 30px;
+      background: rgba(255, 77, 77, 0.15);
+      color: #ff4d4d;
+      box-shadow: 0 0 10px rgba(255,77,77,0.3);
+    }
+
+    /* SOS Button */
+    button {
+      width: 100%;
+      padding: 18px;
+      font-size: 18px;
+      background: linear-gradient(135deg, #ff4d4d, #ff0000);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 15px rgba(255,0,0,0.6); }
+      50% { box-shadow: 0 0 30px rgba(255,0,0,1); }
+      100% { box-shadow: 0 0 15px rgba(255,0,0,0.6); }
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .info {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #ddd;
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <div class="band"></div>
+
+    <h2>NEER Band</h2>
+    <div class="subtitle">Women Safety – Emergency Wearable</div>
+
+    <div class="status" id="statusText">Status: Safe</div>
+
+    <button id="sosBtn">SEND SOS</button>
+
+    <div class="info" id="info"></div>
+
+    <div class="footer">
+      Immediate alert • Live location • Emergency response
+    </div>
+  </div>
+
+  <script>
+    // 🔴 USE SAME FIREBASE CONFIG AS BEFORE
+    var firebaseConfig = {
+      apiKey: "PASTE_REAL_API_KEY",
+      authDomain: "band-dd022.firebaseapp.com",
+      databaseURL: "https://band-dd022-default-rtdb.firebaseio.com",
+      projectId: "band-dd022"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    var database = firebase.database();
+
+    document.getElementById("sosBtn").addEventListener("click", sendSOS);
+
+    function sendSOS() {
+      document.getElementById("statusText").innerText = "Status: EMERGENCY";
+      
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          var lat = position.coords.latitude;
+          var lng = position.coords.longitude;
+
+          database.ref("band_sos").set({
+            latitude: lat,
+            longitude: lng,
+            time: new Date().toString(),
+            status: "SOS_TRIGGERED"
+          });
+
+          document.getElementById("info").innerHTML =
+            "SOS sent successfully<br>" +
+            "Latitude: " + lat + "<br>" +
+            "Longitude: " + lng;
+
+          console.log("Band SOS sent");
+        },
+        function () {
+          alert("Location access required");
+        }
+      );
+    }
+  </script>
+
+</body>
+</html>

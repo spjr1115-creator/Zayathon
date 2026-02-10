@@ -41,6 +41,8 @@ All safety data is logged instantly to the cloud, ensuring fast response and rel
 
 
 ⚙️ KEY FEATURES
+
+
 ⌚ WOMEN SAFETY SMART BAND
 
 One-click SOS emergency trigger

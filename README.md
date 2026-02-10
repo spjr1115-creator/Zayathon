@@ -1,198 +1,124 @@
-🛡️ Smart Safety Wearables System
-Women Safety Band & Child Safety Locket
-📌 Project Overview
+🛡️ NEER – Dual Safety Ecosystem
+Women Safety Band & Child Safety Locket (MVP)
+📌 PROJECT OVERVIEW
 
-The Smart Safety Wearables System is an IoT-based safety solution designed to address two critical real-world safety concerns:
+NEER – Dual Safety Ecosystem is an IoT-inspired real-time safety system designed to address two critical safety needs:
 
 Women Safety during emergencies
 
-Child Safety through real-time monitoring
+Child Safety through continuous monitoring
 
-The system consists of two wearable devices:
+The system functions as a dual wearable ecosystem, consisting of a Women Safety Smart Band and a Child Safety Smart Locket, both connected to a Firebase-backed web dashboard for real-time location tracking and emergency event logging.
 
-Women Safety Smart Band
+🔴 PROBLEM STATEMENT
 
-Child Safety Smart Locket
+In emergency situations:
 
-Both devices are connected to a Firebase-backed web application, enabling guardians or family members to track live location and receive SOS alerts in real time.
+Panic limits the ability to use mobile phones
 
-🎯 Objectives
+Time-critical decisions are required
 
-Provide instant emergency alert capability
+Continuous safety monitoring is often unavailable
 
-Enable real-time location tracking
+Women need a panic-friendly emergency trigger, while parents need a reliable child monitoring system.
 
-Create a simple and reliable safety monitoring system
+💡 PROPOSED SOLUTION
 
-Reduce dependency on mobile phones during emergencies
+NEER offers a dual-mode safety approach:
 
-🧩 System Architecture
+A one-click SOS trigger for women to instantly log emergency location data
 
-The system follows a device → cloud → web dashboard architecture.
+A real-time child location monitoring system for parents
 
-Components:
+All safety data is logged instantly to the cloud, ensuring fast response and reliable access.
 
-Wearable Device (Band / Locket)
+⚙️ KEY FEATURES
+⌚ WOMEN SAFETY SMART BAND
 
-GPS Module
+One-click SOS emergency trigger
 
-Microcontroller (ESP32 / ESP8266)
+Real-time location capture
 
-Firebase Realtime Database
+Firebase-based emergency event logging
 
-Web Application (Parent / Guardian Dashboard)
+Timestamped SOS records
 
-⌚ Women Safety Smart Band
-🎯 Purpose
+Minimal interaction design for panic situations
 
-To provide women with a quick and reliable emergency alert system that can be triggered instantly during unsafe situations.
+📿 CHILD SAFETY SMART LOCKET
 
-🔑 Features
+Continuous real-time location tracking
 
-Real-time GPS location tracking
+Cloud-based location updates
 
-Dedicated SOS emergency button
+Neck-worn design (harder to remove)
 
-Instant alert generation when SOS is pressed
+Independent operation from the smart band
 
-Live location updates stored in Firebase
+Guardian-accessible monitoring dashboard
 
-Wrist-band design for quick access
+🧠 TECHNOLOGIES USED
 
-Works independently without a mobile phone
+Google Firebase Realtime Database
 
-🛠️ Hardware Used
+Firebase Authentication
 
-ESP32 / ESP8266
+HTML
 
-GPS Module
+JavaScript
 
-Push Button (SOS)
+Browser Geolocation API
 
-Battery Power Supply
+ESP32 / ESP8266 (planned hardware integration)
 
-⚙️ Working Flow
+🔥 SYSTEM WORKING FLOW
 
-User wears the smart band
+User wears the band or locket
 
-GPS continuously tracks the location
+Location data is captured in real time
 
-SOS button is pressed during an emergency
+SOS trigger logs emergency data (if activated)
 
-Location and SOS alert are sent to Firebase
+Data is pushed to Firebase Realtime Database
 
-Guardian views live status on the web dashboard
+Guardian views live status via web dashboard
 
-📿 Child Safety Smart Locket
-🎯 Purpose
+🌐 WEB DASHBOARD
 
-To help parents monitor and protect children, especially in public places, schools, and outdoor environments.
+Displays live GPS coordinates
 
-🔑 Features
-
-Real-time child location tracking
-
-SOS button for emergency situations
-
-Sends live GPS data to Firebase
-
-Neck-worn locket (less likely to be removed)
-
-Works independently from the smart band
-
-Acts as a backup safety device
-
-🛠️ Hardware Used (Under Development)
-
-ESP32 / ESP8266
-
-GPS Module
-
-Push Button
-
-Battery Module
-
-⚙️ Working Flow
-
-Child wears the smart locket
-
-GPS tracks location continuously
-
-SOS button sends an emergency signal
-
-Location data updates in Firebase
-
-Parent monitors status via the web application
-
-🌐 Web Application (Common for Both Devices)
-🔑 Features
-
-Secure login using Firebase Authentication
-
-Displays live GPS location
-
-Clearly shows SOS alert status
+Shows SOS alert status clearly
 
 Real-time updates without page refresh
 
-Simple and user-friendly interface
+Simple and fast-to-understand UI
 
-🔥 Firebase Services Used
-🔐 Firebase Authentication
+🚧 PROJECT STATUS
 
-Secure login for parents and guardians
+✅ Working MVP (Proof of Concept)
 
-📡 Firebase Realtime Database
+🔜 Hardware wearable integration
 
-Stores live GPS location data
+🔜 Live map visualization
 
-Stores SOS alert status
+🔜 Mobile application support
 
-📁 Sample Database Structure
-{
-  "devices": {
-    "women_band_01": {
-      "latitude": 12.9716,
-      "longitude": 77.5946,
-      "sos": true
-    },
-    "child_locket_01": {
-      "latitude": 12.9720,
-      "longitude": 77.5951,
-      "sos": false
-    }
-  }
-}
+👥 TEAM INFORMATION
 
-🚀 Setup Instructions
-🔧 Hardware Setup
+Team Name: Team NEER
 
-Connect GPS module to ESP32
+Event: GDG Open Innovation Challenge
 
-Connect SOS push button
+Category: Social Impact – Women & Child Safety
 
-Upload firmware to the microcontroller
+🎯 FUTURE ENHANCEMENTS
 
-Power the device using a battery
+Hardware-based wearable band and locket
 
-⚠️ Limitations
+Geo-fencing for child safety
 
-GPS accuracy depends on signal availability
+Emergency contact notification system
 
-Battery life is limited
+Battery and device health monitoring
 
-Hardware casing is prototype-level
-
-No mobile application yet
-
-🔮 Future Enhancements
-
-Android / iOS mobile application
-
-Geo-fencing alerts
-
-SMS and call alert integration
-
-Smaller and waterproof hardware design
-
-Improved battery optimization
+Advanced map-based visualization

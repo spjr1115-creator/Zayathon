@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Safety Dashboard</title>
+
+  <!-- Firebase SDKs (MUST BE FIRST) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    /* Header */
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 15px 30px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav-tabs {
+      display: flex;
+      gap: 5px;
+      background: rgba(0,0,0,0.05);
+      padding: 5px;
+      border-radius: 12px;
+    }
+    
+    .nav-tab {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-tab.active {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .nav-tab:hover:not(.active) {
+      background: rgba(255,255,255,0.5);
+    }
+    
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    /* Device Status */
+    .device-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: rgba(0,0,0,0.02);
+      border-radius: 8px;
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    
+    .status-online {
+      background: #4CAF50;
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+    }
+    
+    .status-offline {
+      background: #f44336;
+      box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+    }
+    
+    /* Battery */
+    .battery-container {
+      margin-top: 15px;
+    }
+    
+    .battery-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .battery-bar {
+      width: 100%;
+      height: 24px;
+      background: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .battery-level {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      transition: width 0.5s ease;
+      position: relative;
+    }
+    
+    .battery-level::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .battery-low {
+      background: linear-gradient(90deg, #f44336, #FF9800);
+    }
+    
+    /* Safe Zone */
+    .safe-zone {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+    
+    .safe-inside {
+      background: linear-gradient(135deg, #E8F5E8, #C8E6C9);
+      color: #2E7D32;
+    }
+    
+    .safe-outside {
+      background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+      color: #C62828;
+    }
+    
+    /* Device Controls */
+    .device-controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f44336, #d32f2f);
+      color: white;
+      animation: dangerPulse 2s infinite;
+    }
+    
+    @keyframes dangerPulse {
+      0% { box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4); }
+      50% { box-shadow: 0 4px 25px rgba(244, 67, 54, 0.8); }
+      100% { box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4); }
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Event Logs */
+    .event-log {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      background: rgba(0,0,0,0.02);
+    }
+    
+    .event-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .event-item:last-child {
+      border-bottom: none;
+    }
+    
+    .event-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    
+    .event-content {
+      flex: 1;
+    }
+    
+    .event-time {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    /* Maps */
+    .map-container {
+      margin-top: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .map-container iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+    
+    /* Controls */
+    .controls {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .control-group {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .control-group label {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .control-group select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      font-size: 14px;
+    }
+    
+    /* Alert */
+    .alert {
+      color: #f44336;
+      font-weight: bold;
+    }
+    
+    .alert-list {
+      list-style: none;
+    }
+    
+    .alert-item {
+      background: rgba(244, 67, 54, 0.1);
+      border-left: 4px solid #f44336;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .nav-tabs {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .control-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .device-controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header with Navigation -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">🛡️ NEER Safety System</div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="nav-tab" data-tab="women-band">👩 Women's Band</button>
+        <button class="nav-tab" data-tab="child-locket">👶 Child's Locket</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <!-- Controls -->
+      <div class="controls">
+        <div class="control-group">
+          <label for="deviceSelect">Monitor Device:</label>
+          <select id="deviceSelect">
+            <option value="all">All Devices</option>
+            <option value="women_band_01">Women Safety Band</option>
+            <option value="child_locket_01">Child Safety Locket</option>
+          </select>
+          
+          <label for="roleSelect">Role:</label>
+          <select id="roleSelect">
+            <option value="admin">Admin (All Devices)</option>
+            <option value="guardian">Guardian (My Devices Only)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Device Cards Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px;">
+        
+        <!-- Women Band Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">👩 Women Safety Band</h3>
+            <span class="status-indicator status-online" id="bandStatusIndicator"></span>
+          </div>
+          
+          <div class="device-status">
+            <span id="bandStatus">🟢 Online</span>
+            <span id="bandLastSeen" style="margin-left: auto; font-size: 12px; color: #666;">Last seen: Just now</span>
+          </div>
+          
+          <div class="battery-container">
+            <div class="battery-info">
+              <span>Battery Level</span>
+              <span id="bandBattery">85%</span>
+            </div>
+            <div class="battery-bar">
+              <div class="battery-level" id="bandBatteryLevel" style="width: 85%"></div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 15px;">
+            <span class="safe-zone safe-inside" id="bandSafeZone">✅ Inside Safe Zone</span>
+          </div>
+          
+          <p id="bandLocation" style="margin-top: 15px; font-size: 14px; color: #666;">Loading location...</p>
+          
+          <div class="map-container">
+            <iframe id="bandMap" loading="lazy"></iframe>
+          </div>
+        </div>
+
+        <!-- Child Locket Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">👶 Child Safety Locket</h3>
+            <span class="status-indicator status-online" id="locketStatusIndicator"></span>
+          </div>
+          
+          <div class="device-status">
+            <span id="locketStatus">🟢 Online</span>
+            <span id="locketLastSeen" style="margin-left: auto; font-size: 12px; color: #666;">Last seen: Just now</span>
+          </div>
+          
+          <div class="battery-container">
+            <div class="battery-info">
+              <span>Battery Level</span>
+              <span id="locketBattery">92%</span>
+            </div>
+            <div class="battery-bar">
+              <div class="battery-level" id="locketBatteryLevel" style="width: 92%"></div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 15px;">
+            <span class="safe-zone safe-inside" id="locketSafeZone">✅ Inside Safe Zone</span>
+          </div>
+          
+          <p id="locketLocation" style="margin-top: 15px; font-size: 14px; color: #666;">Loading location...</p>
+          
+          <div class="map-container">
+            <iframe id="locketMap" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event History Section -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🚨 SOS Alerts</h3>
+          </div>
+          <ul id="alerts" class="alert-list"></ul>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">� Event History</h3>
+          </div>
+          <div id="eventHistory" class="event-log"></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📍 Location History</h3>
+        </div>
+        <div id="locationHistory" class="event-log"></div>
+      </div>
+    </div>
+
+    <!-- Women Band Tab -->
+    <div id="women-band" class="tab-content">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <div style="text-align: center;">
+          <div style="width: 160px; height: 60px; margin: 0 auto 20px; border-radius: 40px; background: linear-gradient(135deg, #ff4d4d, #b30000); box-shadow: inset 0 0 10px rgba(0,0,0,0.6), 0 0 25px rgba(255,0,0,0.6); position: relative;">
+            <div style="position: absolute; top: 50%; left: -40px; width: 40px; height: 14px; background: #330000; transform: translateY(-50%); border-radius: 14px 0 0 14px;"></div>
+            <div style="position: absolute; top: 50%; right: -40px; width: 40px; height: 14px; background: #330000; transform: translateY(-50%); border-radius: 0 14px 14px 0;"></div>
+          </div>
+          
+          <h2 style="margin: 10px 0 5px; color: #ff4d4d; letter-spacing: 1px;">NEER Band</h2>
+          <div style="font-size: 14px; color: #bbb; margin-bottom: 25px;">Women Safety – Emergency Wearable</div>
+          
+          <div style="display: inline-block; padding: 8px 18px; border-radius: 20px; font-size: 14px; margin-bottom: 30px; background: rgba(255, 77, 77, 0.15); color: #ff4d4d; box-shadow: 0 0 10px rgba(255,77,77,0.3);" id="bandStatusText">Status: Safe</div>
+          
+          <button id="sosBtn" class="btn btn-danger" style="width: 100%; padding: 18px; font-size: 18px; margin-bottom: 18px;">
+            � SEND SOS
+          </button>
+          
+          <div id="bandInfo" style="margin-top: 18px; font-size: 14px; color: #ddd; line-height: 1.5;"></div>
+          
+          <div style="margin-top: 30px; font-size: 12px; color: #777;">
+            Immediate alert • Live location • Emergency response
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Child Locket Tab -->
+    <div id="child-locket" class="tab-content">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <div style="text-align: center;">
+          <div style="width: 90px; height: 90px; margin: 0 auto 15px; border-radius: 50%; background: radial-gradient(circle at top, #66ff99, #1e7f4d); box-shadow: 0 0 25px rgba(102, 255, 153, 0.6); position: relative;">
+            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; background: #ccc; border-radius: 50%;"></div>
+          </div>
+          
+          <h2 style="margin: 10px 0 5px; color: #66ff99; letter-spacing: 1px;">NEER Locket</h2>
+          <div style="font-size: 14px; color: #aaa; margin-bottom: 25px;">Passive Child Safety Tracker</div>
+          
+          <div style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; margin-bottom: 25px; background: rgba(102, 255, 153, 0.15); color: #66ff99;" id="locketStatusText">Status: Active</div>
+          
+          <button id="sendLocketBtn" class="btn btn-success" style="width: 100%; padding: 14px; font-size: 16px; margin-bottom: 18px;">
+            📍 SEND LOCATION
+          </button>
+          
+          <div id="locketInfo" style="margin-top: 18px; font-size: 14px; color: #ddd; line-height: 1.5;"></div>
+          
+          <div style="margin-top: 30px; font-size: 12px; color: #777;">
+            Automatic location update • No child interaction required
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * 0️⃣ TAB NAVIGATION
+     ***********************/
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabs = document.querySelectorAll('.nav-tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const targetTab = tab.getAttribute('data-tab');
+          
+          // Remove active class from all tabs and contents
+          tabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+          
+          // Add active class to clicked tab and corresponding content
+          tab.classList.add('active');
+          document.getElementById(targetTab).classList.add('active');
+        });
+      });
+    });
+
+    /***********************
+     * 1️⃣ FIREBASE CONFIG
+     * REPLACE VALUES ONLY
+     ***********************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdjt2Z9aUMJtadQhisxxn9-hTX7SfbJxI",
+      authDomain: "project-a64f7.firebaseapp.com",
+      databaseURL: "https://project-a64f7-default-rtdb.firebaseio.com",
+      projectId: "project-a64f7",
+      storageBucket: "project-a64f7.firebasestorage.app",
+      messagingSenderId: "714580260077",
+      appId: "1:714580260077:web:60d739c48d931c5a4148e4",
+      measurementId: "G-72FR8SBRCE"
+    };
+
+    /***********************
+     * 2️⃣ INIT FIREBASE
+     ***********************/
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    console.log("✅ Firebase initialized");
+
+    /***********************
+     * 3️⃣ DEBUG: ROOT DATA
+     ***********************/
+    database.ref("/").once("value")
+      .then(snapshot => {      })
+      .catch(err => {
+        console.error("❌ DB ERROR:", err);
+      });
+
+    /***********************
+     * 4️⃣ WOMEN SAFETY BAND
+     ***********************/
+database.ref("locations/women_band_01").on("value", snapshot => {
+  const data = snapshot.val();
+  if (data) {
+    document.getElementById("bandLocation").innerText =
+      `Latitude: ${data.latitude}, Longitude: ${data.longitude}`;
+    
+    // Update map iframe
+    const mapFrame = document.getElementById("bandMap");
+    if (mapFrame) {
+      mapFrame.src = `https://maps.google.com/maps?q=${data.latitude},${data.longitude}&z=15&output=embed`;
+    }
+  }
+});
+    /***********************
+     * 5️⃣ CHILD SAFETY LOCKET
+     ***********************/
+    database.ref("locations/child_locket_01").on("value", snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        document.getElementById("locketLocation").innerText =
+          `Latitude: ${data.latitude}, Longitude: ${data.longitude}`;
+        
+        // Update map iframe
+        const mapFrame = document.getElementById("locketMap");
+        if (mapFrame) {
+          mapFrame.src = `https://maps.google.com/maps?q=${data.latitude},${data.longitude}&z=15&output=embed`;
+        }
+      }
+    });
+
+    /***********************
+     * 6️⃣ SOS EVENTS
+     ***********************/
+    database.ref("events").on("child_added", snapshot => {
+      console.log("🚨 EVENT:", snapshot.val());
+      const event = snapshot.val();
+
+      if (event && event.eventType === "SOS_TRIGGERED") {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          🚨 <strong>${event.deviceId}</strong><br>
+          Time: ${new Date(event.timestamp).toLocaleString()}
+        `;
+        document.getElementById("alerts").prepend(li);
+        
+        // Keep only last 5 alerts
+        const alerts = document.getElementById("alerts");
+        while (alerts.children.length > 5) {
+          alerts.removeChild(alerts.lastChild);
+        }
+      }
+    });
+
+    /***********************
+     * 7️⃣ DEVICE HEALTH MONITORING
+     ***********************/
+    function updateDeviceStatus(deviceId, statusElement, indicatorElement, lastSeenElement) {
+      database.ref(`devices/${deviceId}`).on("value", snapshot => {
+        const device = snapshot.val();
+        if (device) {
+          const isOnline = device.status === "online";
+          const lastSeen = device.lastSeen;
+          
+          statusElement.textContent = isOnline ? "🟢 Online" : "🔴 Offline";
+          indicatorElement.className = `status-indicator ${isOnline ? "status-online" : "status-offline"}`;
+          
+          if (lastSeen) {
+            const lastSeenTime = new Date(lastSeen);
+            const now = new Date();
+            const diffMs = now - lastSeenTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) {
+              lastSeenElement.textContent = "Last seen: Just now";
+            } else if (diffMins < 60) {
+              lastSeenElement.textContent = `Last seen: ${diffMins} min ago`;
+            } else {
+              lastSeenElement.textContent = `Last seen: ${Math.floor(diffMins / 60)} hours ago`;
+            }
+          }
+        }
+      });
+    }
+
+    function updateBatteryLevel(deviceId, batteryElement, batteryBarElement) {
+      database.ref(`devices/${deviceId}/batteryLevel`).on("value", snapshot => {
+        const battery = snapshot.val();
+        if (battery !== null) {
+          batteryElement.textContent = `${battery}%`;
+          batteryBarElement.style.width = `${battery}%`;
+          
+          if (battery < 20) {
+            batteryBarElement.classList.add("battery-low");
+          } else {
+            batteryBarElement.classList.remove("battery-low");
+          }
+        }
+      });
+    }
+
+    function updateSafeZone(deviceId, safeZoneElement) {
+      database.ref(`devices/${deviceId}/safeZoneStatus`).on("value", snapshot => {
+        const status = snapshot.val();
+        if (status) {
+          const isInside = status === "inside";
+          safeZoneElement.textContent = isInside ? "✅ Inside Safe Zone" : "⚠️ Outside Safe Zone";
+          safeZoneElement.className = `safe-zone ${isInside ? "safe-inside" : "safe-outside"}`;
+        }
+      });
+    }
+
+    function updateLocationHistory(deviceId) {
+      database.ref(`locationHistory/${deviceId}`).on("child_added", snapshot => {
+        const location = snapshot.val();
+        const historyDiv = document.getElementById("locationHistory");
+        
+        const time = new Date(location.timestamp).toLocaleTimeString();
+        const item = document.createElement("div");
+        item.className = "event-item";
+        item.innerHTML = `<strong>${deviceId}</strong> - ${time}<br>
+                         📍 ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+        historyDiv.insertBefore(item, historyDiv.firstChild);
+        
+        // Keep only last 10 entries
+        while (historyDiv.children.length > 10) {
+          historyDiv.removeChild(historyDiv.lastChild);
+        }
+      });
+    }
+
+    function updateEventHistory() {
+      database.ref("events").on("child_added", snapshot => {
+        const event = snapshot.val();
+        const historyDiv = document.getElementById("eventHistory");
+        
+        const time = new Date(event.timestamp).toLocaleTimeString();
+        const item = document.createElement("div");
+        item.className = "event-item";
+        
+        let eventIcon = "📋";
+        if (event.eventType === "SOS_TRIGGERED") eventIcon = "🚨";
+        else if (event.eventType === "BATTERY_LOW") eventIcon = "🔋";
+        else if (event.eventType === "DEVICE_CONNECTED") eventIcon = "�";
+        else if (event.eventType === "DEVICE_DISCONNECTED") eventIcon = "🔌";
+        
+        item.innerHTML = `${eventIcon} <strong>${event.deviceId}</strong> - ${time}<br>
+                         ${event.eventType.replace(/_/g, " ")}`;
+        historyDiv.insertBefore(item, historyDiv.firstChild);
+        
+        // Keep only last 20 entries
+        while (historyDiv.children.length > 20) {
+          historyDiv.removeChild(historyDiv.lastChild);
+        }
+      });
+    }
+
+    /***********************
+     * 8️⃣ MULTI-DEVICE VIEW & ROLE-BASED ACCESS
+     ***********************/
+    // Role-based device access control
+    const userRole = localStorage.getItem('userRole') || 'admin';
+    const linkedDevices = JSON.parse(localStorage.getItem('linkedDevices') || '["women_band_01", "child_locket_01"]');
+    
+    document.getElementById("roleSelect").value = userRole;
+    
+    document.getElementById("roleSelect").addEventListener("change", function(e) {
+      const newRole = e.target.value;
+      localStorage.setItem('userRole', newRole);
+      applyRoleBasedAccess(newRole);
+    });
+    
+    function applyRoleBasedAccess(role) {
+      const bandCard = document.querySelector("h2").parentElement;
+      const locketCard = document.querySelectorAll(".card")[1];
+      const deviceSelect = document.getElementById("deviceSelect");
+      
+      if (role === "guardian") {
+        // Guardian only sees linked devices
+        deviceSelect.innerHTML = `
+          <option value="all">My Devices</option>
+          ${linkedDevices.includes("women_band_01") ? '<option value="women_band_01">Women Safety Band</option>' : ''}
+          ${linkedDevices.includes("child_locket_01") ? '<option value="child_locket_01">Child Safety Locket</option>' : ''}
+        `;
+        
+        // Hide devices not linked to this guardian
+        if (!linkedDevices.includes("women_band_01")) {
+          bandCard.style.display = "none";
+        }
+        if (!linkedDevices.includes("child_locket_01")) {
+          locketCard.style.display = "none";
+        }
+      } else {
+        // Admin sees all devices
+        deviceSelect.innerHTML = `
+          <option value="all">All Devices</option>
+          <option value="women_band_01">Women Safety Band</option>
+          <option value="child_locket_01">Child Safety Locket</option>
+        `;
+        bandCard.style.display = "block";
+        locketCard.style.display = "block";
+      }
+    }
+    
+    document.getElementById("deviceSelect").addEventListener("change", function(e) {
+      const selectedDevice = e.target.value;
+      const bandCard = document.querySelector("h2").parentElement;
+      const locketCard = document.querySelectorAll(".card")[1];
+      
+      if (selectedDevice === "women_band_01") {
+        bandCard.style.display = "block";
+        locketCard.style.display = "none";
+      } else if (selectedDevice === "child_locket_01") {
+        bandCard.style.display = "none";
+        locketCard.style.display = "block";
+      } else {
+        // Show all devices based on role
+        if (userRole === "guardian") {
+          bandCard.style.display = linkedDevices.includes("women_band_01") ? "block" : "none";
+          locketCard.style.display = linkedDevices.includes("child_locket_01") ? "block" : "none";
+        } else {
+          bandCard.style.display = "block";
+          locketCard.style.display = "block";
+        }
+      }
+    });
+    
+    // Initialize role-based access
+    applyRoleBasedAccess(userRole);
+
+    /***********************
+     * 10️⃣ DEVICE CONTROL FUNCTIONS
+     ***********************/
+    
+    // Women Band SOS Function
+    document.getElementById("sosBtn").addEventListener("click", function() {
+      document.getElementById("bandStatusText").innerText = "Status: EMERGENCY";
+      
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          var lat = position.coords.latitude;
+          var lng = position.coords.longitude;
+
+          database.ref("events").push({
+            deviceId: "women_band_01",
+            eventType: "SOS_TRIGGERED",
+            latitude: lat,
+            longitude: lng,
+            timestamp: new Date().toISOString()
+          });
+
+          database.ref("locations/women_band_01").set({
+            latitude: lat,
+            longitude: lng,
+            timestamp: new Date().toISOString()
+          });
+
+          document.getElementById("bandInfo").innerHTML =
+            "🚨 SOS sent successfully<br>" +
+            "📍 Latitude: " + lat + "<br>" +
+            "📍 Longitude: " + lng;
+
+          console.log("Band SOS sent");
+        },
+        function () {
+          alert("Location access required for SOS alert");
+        }
+      );
+    });
+
+    // Child Locket Location Function
+    document.getElementById("sendLocketBtn").addEventListener("click", function() {
+      document.getElementById("locketStatusText").innerText = "Status: Location Sent";
+      
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          var lat = position.coords.latitude;
+          var lng = position.coords.longitude;
+
+          database.ref("locations/child_locket_01").set({
+            latitude: lat,
+            longitude: lng,
+            timestamp: new Date().toISOString()
+          });
+
+          database.ref("events").push({
+            deviceId: "child_locket_01",
+            eventType: "LOCATION_UPDATE",
+            latitude: lat,
+            longitude: lng,
+            timestamp: new Date().toISOString()
+          });
+
+          document.getElementById("locketInfo").innerHTML =
+            "✅ Location sent successfully<br>" +
+            "📍 Latitude: " + lat + "<br>" +
+            "📍 Longitude: " + lng;
+
+          console.log("Locket location sent");
+          
+          // Reset status after 3 seconds
+          setTimeout(() => {
+            document.getElementById("locketStatusText").innerText = "Status: Active";
+          }, 3000);
+        },
+        function () {
+          alert("Location access required for location update");
+        }
+      );
+    });
+
+    /***********************
+     * 9️⃣ INIT ALL MONITORS
+     ***********************/
+    // Initialize device health monitoring
+    updateDeviceStatus("women_band_01", 
+      document.getElementById("bandStatus"), 
+      document.getElementById("bandStatusIndicator"),
+      document.getElementById("bandLastSeen"));
+    
+    updateDeviceStatus("child_locket_01", 
+      document.getElementById("locketStatus"), 
+      document.getElementById("locketStatusIndicator"),
+      document.getElementById("locketLastSeen"));
+
+    // Initialize battery monitoring
+    updateBatteryLevel("women_band_01", 
+      document.getElementById("bandBattery"),
+      document.getElementById("bandBatteryLevel"));
+    
+    updateBatteryLevel("child_locket_01", 
+      document.getElementById("locketBattery"),
+      document.getElementById("locketBatteryLevel"));
+
+    // Initialize safe zone monitoring
+    updateSafeZone("women_band_01", document.getElementById("bandSafeZone"));
+    updateSafeZone("child_locket_01", document.getElementById("locketSafeZone"));
+
+    // Initialize location history
+    updateLocationHistory("women_band_01");
+    updateLocationHistory("child_locket_01");
+
+    // Initialize event history
+    updateEventHistory();
+
+    // Simulate some initial data for demo
+    setTimeout(() => {
+      database.ref("devices/women_band_01").set({
+        status: "online",
+        lastSeen: new Date().toISOString(),
+        batteryLevel: 85
+      });
+      
+      database.ref("devices/child_locket_01").set({
+        status: "online", 
+        lastSeen: new Date().toISOString(),
+        batteryLevel: 92
+      });
+      
+      database.ref("devices/women_band_01/safeZoneStatus").set("inside");
+      database.ref("devices/child_locket_01/safeZoneStatus").set("inside");
+      
+      // Add some sample location history
+      const now = new Date();
+      for (let i = 0; i < 5; i++) {
+        const time = new Date(now.getTime() - (i * 5 * 60000));
+        database.ref(`locationHistory/women_band_01`).push({
+          latitude: 12.9716 + (i * 0.001),
+          longitude: 77.5946 + (i * 0.001),
+          timestamp: time.toISOString()
+        });
+        
+        database.ref(`locationHistory/child_locket_01`).push({
+          latitude: 12.9726 + (i * 0.0005),
+          longitude: 77.5956 + (i * 0.0005),
+          timestamp: time.toISOString()
+        });
+      }
+      
+      // Add sample events
+      database.ref("events").push({
+        deviceId: "women_band_01",
+        eventType: "DEVICE_CONNECTED",
+        timestamp: new Date(now.getTime() - 300000).toISOString()
+      });
+      
+      database.ref("events").push({
+        deviceId: "child_locket_01", 
+        eventType: "DEVICE_CONNECTED",
+        timestamp: new Date(now.getTime() - 240000).toISOString()
+      });
+    }, 1000);
+    
+    // Simulate battery drain
+    setInterval(() => {
+      database.ref("devices/women_band_01/batteryLevel").once("value", snapshot => {
+        const battery = snapshot.val();
+        if (battery && battery > 15) {
+          database.ref("devices/women_band_01/batteryLevel").set(battery - 1);
+        }
+      });
+      
+      database.ref("devices/child_locket_01/batteryLevel").once("value", snapshot => {
+        const battery = snapshot.val();
+        if (battery && battery > 15) {
+          database.ref("devices/child_locket_01/batteryLevel").set(battery - 1);
+        }
+      });
+    }, 30000); // Update every 30 seconds
+  </script>
+
+</body>
+</html>
